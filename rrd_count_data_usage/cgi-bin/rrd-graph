@@ -1,0 +1,59 @@
+#!/bin/sh
+rrdtool graph /usr/local/rrd/bandwidth_4h.png --end now --start end-14400 -S 600 -a PNG -h 125 -v "Data Throughput" \
+    'DEF:in=/usr/local/rrd/bandwidth.rrd:in:AVERAGE' \
+    'DEF:out=/usr/local/rrd/bandwidth.rrd:out:AVERAGE' \
+    'CDEF:bin=in,600,*' \
+    'CDEF:bout=out,600,*' \
+    'CDEF:mbin=bin,1048576,/' \
+    'CDEF:mbout=bout,1048576,/' \
+    'AREA:bin#00FF00:Data In'                               'LINE1:bout#0000FF:Data Out\j' \
+    'GPRINT:mbin:LAST:Last Data In\:    %3.2lf MB'       'GPRINT:mbout:LAST:Last Data Out\:   %3.2lf MB\j' \
+    'GPRINT:mbin:AVERAGE:Average Data In\: %3.2lf MB'    'GPRINT:mbout:AVERAGE:Average Data Out\:%3.2lf MB\j' > /dev/null
+rrdtool graph /usr/local/rrd/bandwidth_2d.png --end now --start end-172800 -S 3600 -a PNG -h 125 -v "Data Througput" \
+'DEF:in=/usr/local/rrd/bandwidth.rrd:in:AVERAGE' \
+    'DEF:out=/usr/local/rrd/bandwidth.rrd:out:AVERAGE' \
+    'CDEF:bin=in,3600,*' \
+    'CDEF:bout=out,3600,*' \
+    'CDEF:mbin=bin,1048576,/' \
+    'CDEF:mbout=bout,1048576,/' \
+    'AREA:bin#00FF00:Data In'                               'LINE1:bout#0000FF:Data Out\j' \
+    'GPRINT:mbin:LAST:Last Data In\:    %3.2lf MB'       'GPRINT:mbout:LAST:Last Data Out\:   %3.2lf MB\j' \
+    'GPRINT:mbin:AVERAGE:Average Data In\: %3.2lf MB'    'GPRINT:mbout:AVERAGE:Average Data Out\:%3.2lf MB\j' > /dev/null
+rrdtool graph /usr/local/rrd/bandwidth_m.png --end now --start end-2678400 -S 86400 --x-grid DAY:1:WEEK:1:WEEK:1:0:"%d.%m" -a PNG -h 125 -v "Data Througput" \
+    'DEF:in=/usr/local/rrd/bandwidth.rrd:in:AVERAGE' \
+    'DEF:out=/usr/local/rrd/bandwidth.rrd:out:AVERAGE' \
+    'CDEF:bin=in,86400,*' \
+    'CDEF:bout=out,86400,*' \
+    'CDEF:mbin=bin,1073741824,/' \
+    'CDEF:mbout=bout,1073741824,/' \
+    'AREA:bin#00FF00:Data In'                               'LINE1:bout#0000FF:Data Out\j' \
+    'GPRINT:mbin:LAST:Last Data In\:    %3.2lf GB'       'GPRINT:mbout:LAST:Last Data Out\:   %3.2lf GB\j' \
+    'GPRINT:mbin:AVERAGE:Average Data In\: %3.2lf GB'    'GPRINT:mbout:AVERAGE:Average Data Out\:%3.2lf GB\j' > /dev/null
+cat << EOF
+Content-type: text/html
+
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<body>
+<center>
+EOF
+awk 'END { printf "<progress value=\"%.0f\" max=\"107374182400\"></progress></br>\n", $1 } \
+         { printf "<h1>Dane zużyte w tym miesiącu: <ins>%.2f GB</ins></br>\n", $1 / 1073741824 }' /usr/local/rrd/db/datausage
+cat << EOF
+Ostatnie 4 godziny (co 10 min)</br>
+<img src="/bandwidth_4h.png" width="75%">
+</br>Ostatnie 2 dni (co godzinę)</br>
+<img src="/bandwidth_2d.png" width="75%">
+</br>Ostatni miesiąc (co dzień)</br>
+<img src="/bandwidth_m.png" width="75%">
+<style>
+progress[value] {
+  width: 530px;
+  height: 50px;
+}
+</style>
+</center>
+</body>
+</html>
+EOF
