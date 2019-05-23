@@ -1,0 +1,23 @@
+desc:Stop on NoteOn
+
+slider1:0<0,127,1>Low Note;
+slider2:127<0,127,1>High Note
+
+@init
+prevNote = 127;
+
+@slider
+lowNote = slider1;
+highNote = slider2;
+
+@block
+while (midirecv(offset, msg1, msg2, msg3)) (
+  msg1==$x90 && 
+    (highNote >= msg2) &&
+    (lowNote <= msg2) &&
+    (prevNote != msg2) && (
+      midisend(offset, $x80, prevNote, 0);
+      prevNote = msg2;
+  );
+  msg1!=$x80 && midisend(offset, msg1, msg2, msg3);
+)
